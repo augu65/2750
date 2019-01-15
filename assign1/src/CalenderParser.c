@@ -3,10 +3,23 @@
 #include <ctype.h>
 
 ICalErrorCode createCalendar (char* fileName, Calendar** obj){
+	int length =strlen(fileName);
+	if (length>4 && (fileName[length-4]=='.' && fileName[length-3]=='i' && fileName[length-2]=='c' &&filename[length-1]=='s')){
+		
+	}
+	else{
+		free(fileName);
+		deleteCalendar(obj);
+		return "Invalid File";
+	}
+
 	return OK;
 }
 
 void deleteCalendar (Calendar*obj){
+	freeList(obj->events);
+	freeList(obj->properites);
+	free(obj);
 }
 
 char* printCalendar (const Calendar* obj){
@@ -18,6 +31,10 @@ char* printError (ICalErrorCode err){
 }
 
 ICalErrorCode writeCalendar (const Calendar* obj){
+	return OK;
+}
+
+ICalErrorCode validateCalendar (const Calendar* obj){
 	return OK;
 }
 
