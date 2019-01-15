@@ -4,15 +4,29 @@
 
 ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	int length =strlen(fileName);
-	if (length>4 && (fileName[length-4]=='.' && fileName[length-3]=='i' && fileName[length-2]=='c' &&filename[length-1]=='s')){
-		
-	}
-	else{
+	if (length<5 || !(fileName[length-4]=='.' && fileName[length-3]=='i' && fileName[length-2]=='c' &&filename[length-1]=='s')){
 		free(fileName);
-		deleteCalendar(obj);
-		return "Invalid File";
+		//set obj to null???????????????????????????????	
+		return INV_FILE;
+	}
+	FILE* fp;
+	(*obj)=malloc(sizeof(Calendar));
+	List* events=initializeList(&printEvent,&deleteEvent,&compareEvents);
+	List* properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
+	fp=fopen(filename,"r");
+	if(fp==NULL){
+		freeList(events);
+		freeList(properties);
+		free(fp);
+		free(fileName);
+		free(events);
+		free(properties);
+		//set obj to null????????????????????????????????????????????
+		return INV_FILE;
 	}
 
+	
+	
 	return OK;
 }
 
