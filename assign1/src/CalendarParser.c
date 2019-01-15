@@ -1,10 +1,10 @@
-#include "CalenderParser.h"
+#include "CalendarParser.h"
 #include "LinkedListAPI.h"
 #include <ctype.h>
 
 ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	int length =strlen(fileName);
-	if (length<5 || !(fileName[length-4]=='.' && fileName[length-3]=='i' && fileName[length-2]=='c' &&filename[length-1]=='s')){
+	if (length<5 || !(fileName[length-4]=='.' && fileName[length-3]=='i' && fileName[length-2]=='c' &&fileName[length-1]=='s')){
 		free(fileName);
 		//set obj to null???????????????????????????????	
 		return INV_FILE;
@@ -13,7 +13,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	(*obj)=malloc(sizeof(Calendar));
 	List* events=initializeList(&printEvent,&deleteEvent,&compareEvents);
 	List* properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
-	fp=fopen(filename,"r");
+	fp=fopen(fileName,"r");
 	if(fp==NULL){
 		freeList(events);
 		freeList(properties);
@@ -32,7 +32,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 
 void deleteCalendar (Calendar*obj){
 	freeList(obj->events);
-	freeList(obj->properites);
+	freeList(obj->properties);
 	free(obj);
 }
 
@@ -44,7 +44,7 @@ char* printError (ICalErrorCode err){
 	return "";
 }
 
-ICalErrorCode writeCalendar (const Calendar* obj){
+ICalErrorCode writeCalendar (char* fileName, const Calendar* obj){
 	return OK;
 }
 
