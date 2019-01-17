@@ -27,7 +27,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 		(*obj)=NULL;
 		return INV_FILE;
 	}
-	char buff[1000]="";
+	char buffer[1000]="";
 	char ** fileData=malloc(sizeof(char*));
 	int x=1;
 	while(fgets(buffer,sizeof(buffer),fp)){
@@ -42,19 +42,29 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	for(i=0; i<x; i=i+1){
 		if(strstr("VERSION",fileData[i])!=NULL){
 			y=0;
-			for(y=0; y<strlen(fileData[i]);y=y+1){
-				strcat(string,fileData[i][y]);
+			for(y=8; y<strlen(fileData[i]);y=y+1){
+				if(isalpha(fileData[i][y])||ispunct(fileData[i][y])){
+					if(fileData[i][y]!='.'){
+						freeList((*obj)->events);
+						freeList((*obj)->properties);
+						free(fileName);
+						(*obj)=NULL;
+						return INV_FILE;
+					}
+				}
+				strcat(string,&fileData[i][y]);
 			}
-			(*obj)->version=float(string);
-			string="";
+			(*obj)->version=atof(string);
+			strcpy(string,"");
+
 		}
 		else if(strstr("PRODID",fileData[i]) !=NULL){
 			y=0;
 			for(y=0; y<strlen(fileData[i]);y=y+1){
-				strcat(string,fileData[i][y]);
+				strcat(string,&fileData[i][y]);
 			}
 			strcpy((*obj)->prodID,string);
-			string="";
+			strcpy(string,"");
 		}
 	}
 	
@@ -72,14 +82,15 @@ void deleteCalendar (Calendar*obj){
 }
 
 char* printCalendar (const Calendar* obj){
-	char * string=malloc(sizeof(char)*(1000+strlen(str(obj->version)));
+	char version[100];
+	sprintf(version,"%g",obj->version);
+	char * string=malloc(sizeof(char)*(1000+strlen(version)));
 	strcpy(string,"Version:");
-	strcat(string,str(obj->version));
-	strcat(string,"\r\n");
+	strcat(string,version);
 	strcat(string,"PRODID:");
 	strcat(string,obj->prodID);
-	strcat(string,"\r\n");
-	
+	strcat(string,printEvent(obj->events));
+	strcat(string,printProperty(obj->properties));
 	return string;
 }
 
@@ -96,10 +107,10 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 }
 
 void deleteEvent (void* toBeDeleted){
-	Event* e=Event(toBeDeleted);
+	Event* e=(Event*)toBeDeleted;
 	freeList(e->properties);
 	freeList(e->alarms);
-	free(e)	
+	free(e);	
 }
 
 int compareEvents (const void* first, const void* second){
@@ -111,7 +122,7 @@ char* printEvent (void* toBePrinted){
 }
 
 void deleteAlarm (void* toBeDeleted){
-	Alarm * a=Alarm(toBeDeleted);
+	Alarm * a=(Alarm*)toBeDeleted;
 	free(a->trigger);
 	freeList(a->properties);
 	free(a);
@@ -126,8 +137,7 @@ char* printAlarm (void* toBePrinted){
 }
 
 void deleteProperty (void* toBeDeleted){
-	free(Property(toBeDeleted)->propDescr);
-	free(Property(toBeDeleted));
+	free((Property*)toBeDeleted);
 }
 
 int compareProperties (const void* first, const void* second){
@@ -139,7 +149,7 @@ char* printProperty (void* toBePrinted){
 }
 
 void deleteDate (void* toBeDeleted){
-	free(DateTime(toBeDeleted));
+	free((DateTime*)toBeDeleted);
 }
 
 int compareDates (const void* first, const void* second){
