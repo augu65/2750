@@ -1,32 +1,67 @@
 #include "CalendarParser.h"
-#include "LinkedListAPI.h"
 #include <ctype.h>
 
 ICalErrorCode createCalendar (char* fileName, Calendar** obj){
+	if( fileName==NULL){
+		(*obj)=NULL;
+		free(fileName);
+		return INV_FILE;
+
+	}
 	int length =strlen(fileName);
+	(*obj)=malloc(sizeof(Calendar));
 	if (length<5 || !(fileName[length-4]=='.' && fileName[length-3]=='i' && fileName[length-2]=='c' &&fileName[length-1]=='s')){
 		free(fileName);
-		//set obj to null???????????????????????????????	
+		(*obj)=NULL;
 		return INV_FILE;
 	}
 	FILE* fp;
-	(*obj)=malloc(sizeof(Calendar));
-	List* events=initializeList(&printEvent,&deleteEvent,&compareEvents);
-	List* properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
+	(*obj)->events=initializeList(&printEvent,&deleteEvent,&compareEvents);
+	(*obj)->properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
 	fp=fopen(fileName,"r");
 	if(fp==NULL){
-		freeList(events);
-		freeList(properties);
+		freeList((*obj)->events);
+		freeList((*obj)->properties);
 		free(fp);
 		free(fileName);
-		free(events);
-		free(properties);
-		//set obj to null????????????????????????????????????????????
+		(*obj)=NULL;
 		return INV_FILE;
 	}
-
+	char buff[1000]="";
+	char ** fileData=malloc(sizeof(char*));
+	int x=1;
+	while(fgets(buffer,sizeof(buffer),fp)){
+		fileData=realloc(fileData,sizeof(char*)+x);
+		(*fileData)=malloc(sizeof(char)*strlen(buffer));
+		strcpy(fileData[x],buffer);
+		x=x+1;
+	}
+	char string[10000]="";
+	int i=0;
+	int y=0;
+	for(i=0; i<x; i=i+1){
+		if(strstr("VERSION",fileData[i])!=NULL){
+			y=0;
+			for(y=0; y<strlen(fileData[i]);y=y+1){
+				strcat(string,fileData[i][y]);
+			}
+			(*obj)->version=float(string);
+			string="";
+		}
+		else if(strstr("PRODID",fileData[i]) !=NULL){
+			y=0;
+			for(y=0; y<strlen(fileData[i]);y=y+1){
+				strcat(string,fileData[i][y]);
+			}
+			strcpy((*obj)->prodID,string);
+			string="";
+		}
+	}
 	
-	
+	for(i=0; i<x; i=i+1){
+		free(fileData[i]);
+	}
+	free(fileData);
 	return OK;
 }
 
@@ -37,7 +72,15 @@ void deleteCalendar (Calendar*obj){
 }
 
 char* printCalendar (const Calendar* obj){
-	return "";
+	char * string=malloc(sizeof(char)*(1000+strlen(str(obj->version)));
+	strcpy(string,"Version:");
+	strcat(string,str(obj->version));
+	strcat(string,"\r\n");
+	strcat(string,"PRODID:");
+	strcat(string,obj->prodID);
+	strcat(string,"\r\n");
+	
+	return string;
 }
 
 char* printError (ICalErrorCode err){
@@ -53,6 +96,10 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 }
 
 void deleteEvent (void* toBeDeleted){
+	Event* e=Event(toBeDeleted);
+	freeList(e->properties);
+	freeList(e->alarms);
+	free(e)	
 }
 
 int compareEvents (const void* first, const void* second){
@@ -64,6 +111,10 @@ char* printEvent (void* toBePrinted){
 }
 
 void deleteAlarm (void* toBeDeleted){
+	Alarm * a=Alarm(toBeDeleted);
+	free(a->trigger);
+	freeList(a->properties);
+	free(a);
 }
 
 int compareAlarms (const void* first, const void* second){
@@ -75,6 +126,8 @@ char* printAlarm (void* toBePrinted){
 }
 
 void deleteProperty (void* toBeDeleted){
+	free(Property(toBeDeleted)->propDescr);
+	free(Property(toBeDeleted));
 }
 
 int compareProperties (const void* first, const void* second){
@@ -86,6 +139,7 @@ char* printProperty (void* toBePrinted){
 }
 
 void deleteDate (void* toBeDeleted){
+	free(DateTime(toBeDeleted));
 }
 
 int compareDates (const void* first, const void* second){
