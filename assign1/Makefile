@@ -16,5 +16,5 @@ list: src/LinkedListAPI.c include/LinkedListAPI.h
 parser: src/CalendarParser.c  include/CalendarParser.h
 	$(CC) -shared $(CFLAGS) -o bin/libcal.so -fPIC  src/CalendarParser.c -I include
 
-flean:
-	rm bin/*.o bin/*.so
+clean:
+	rm -rf bin/*.o bin/*.so
