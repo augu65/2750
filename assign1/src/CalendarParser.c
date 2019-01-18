@@ -40,7 +40,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	int i=0;
 	int y=0;
 	for(i=0; i<x; i=i+1){
-		if(strstr("VERSION",fileData[i])!=NULL){
+		if(strstr("VERSION",fileData[i])!=NULL&& strlen(fileData[i])>6){
 			y=0;
 			for(y=8; y<strlen(fileData[i]);y=y+1){
 				if(isalpha(fileData[i][y])||ispunct(fileData[i][y])){
@@ -58,9 +58,9 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 			strcpy(string,"");
 
 		}
-		else if(strstr("PRODID",fileData[i]) !=NULL){
+		else if(strstr("PRODID",fileData[i]) !=NULL&& strlen(fileData[i])>6){
 			y=0;
-			for(y=0; y<strlen(fileData[i]);y=y+1){
+			for(y=7; y<strlen(fileData[i]);y=y+1){
 				strcat(string,&fileData[i][y]);
 			}
 			strcpy((*obj)->prodID,string);
