@@ -33,13 +33,18 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 		return INV_FILE;
 	}
 	char buffer[1000]="";
+	int tflag=0;
 	char ** fileData=malloc(sizeof(char*));
 	int x=1;
 	while(fgets(buffer,sizeof(buffer),fp)){
 		fileData=realloc(fileData,sizeof(char*)+x);
 		(*fileData)=malloc(sizeof(char)*strlen(buffer));
-		strcpy(fileData[x],buffer);
-		x=x+1;
+		if(buffer[0]=='\t'||buffer[0]==' '){
+			strcat(fileData[x-1],buffer);
+		}else{
+			strcpy(fileData[x],buffer);
+			x=x+1;
+		}
 	}
 	char string[10000]="";
 	int i=0;
