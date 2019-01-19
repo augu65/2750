@@ -1,10 +1,16 @@
+#Make file for 2750
+#Jonah Stegman
+#0969112
 CC = gcc
 CFLAGS = -Wall -g -std=c11 
 Libs = -Lbin/
 
-all: list parser
+all: list parser test
 
-Calendar: src/CalendarParser.c include/CalendarParser.h
+test: src/test.c
+	$(CC) $(CFLAGS) src/test.c -o bin/test.o -I include
+
+Calendar: src/CalendarParser.c include/CalendarParser.h include/helper.h
 	$(CC) -c $(CFLAGS) src/CalendarParser.c -o bin/CalendarParser.o -I include
 
 Linked: src/LinkedListAPI.c include/LinkedListAPI.h
@@ -13,7 +19,7 @@ Linked: src/LinkedListAPI.c include/LinkedListAPI.h
 list: src/LinkedListAPI.c include/LinkedListAPI.h
 	$(CC) -shared $(CFLAGS) -o bin/liblist.so -fPIC src/LinkedListAPI.c -I include
 	
-parser: src/CalendarParser.c  include/CalendarParser.h
+parser: src/CalendarParser.c  include/CalendarParser.h include/helper.h
 	$(CC) -shared $(CFLAGS) -o bin/libcal.so -fPIC  src/CalendarParser.c -I include
 
 clean:

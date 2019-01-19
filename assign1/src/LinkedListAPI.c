@@ -1,3 +1,9 @@
+/**
+ * This is the linked list that was given by Dr. Nikitenko in 2750
+ * none of the code was changed
+ * Jonah Stegman
+ * 0969112
+ **/
 #include "LinkedListAPI.h"
 #include "assert.h"
 
