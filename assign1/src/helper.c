@@ -4,22 +4,21 @@
  * 0969112
  */
 #include "helper.h"
-
 int dateLength(){
 	DateTime*d =malloc(sizeof(DateTime));
-	char a;
-	int length=strlen(d->date)+sizeof(bool)+strlen((char)d->UTC);
+	int length=10+sizeof(bool)+7;
 	free(d);
 	return length;
 }
 
 Event * createEvent(char** lines, int position, int size){
 	Event * obj =malloc(sizeof(Event));
-	obj->alarm=initializeList(&printAlarm,&deleteAlarm,&compareAlarms);
-	obj->property=initializeList(&printProperty,&deleteProperty,&compareProperties);
+	obj->alarms=initializeList(&printAlarm,&deleteAlarm,&compareAlarms);
+	obj->properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
 	strcpy(obj->UID,"");
+	int flag=0;
 	for(position=position+1; position<size; position=position+1){
-		if(flag=1){
+		if(flag==1){
 			int x=position;
 			for(x=position+1; position<size; x=x+1){
 				if(strstr(lines[position],"END:VALARM")!=NULL){
@@ -31,14 +30,14 @@ Event * createEvent(char** lines, int position, int size){
 		if(strstr(lines[position],"UID")!=NULL){
 			strcpy(obj->UID,lines[position]);
 		}else if(strstr(lines[position],"DTSTAMP")!=NULL){
-			obj->creationDateTime=&createDate(lines[positon]);
+			obj->creationDateTime=createDate(lines[position]);
 		}else if(strstr(lines[position],"DTSTART")!=NULL){
-			obj->startDateTime=&createDate(lines[position]);
+			obj->startDateTime=createDate(lines[position]);
 		}else if(strstr(lines[position],"BEGIN:VALARM")!=NULL){
-			insertFront(obj->alarm,createAlarm(lines,position,size));
+			insertFront(obj->alarms,createAlarm(lines,position,size));
 			flag=1;
 		}else{
-			insertFront(obj->property,createProperty(lines[position]));
+			insertFront(obj->properties,createProperty(lines[position]));
 		}
 		
 	}
@@ -48,17 +47,17 @@ Event * createEvent(char** lines, int position, int size){
 
 Alarm * createAlarm(char** lines,int position,int size){
 	Alarm * obj=malloc(sizeof(Alarm));
-	obj->properties=intializeList(&printProperty,&deleteProperty,&compareProperties);
+	obj->properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
 	strcpy(obj->trigger,"");
 	strcpy(obj->action,"");
 	int flag=0;
 	for (position=position+1; position<size; position=position+1){
-		if(strstr("ACTION",lines[positon])!=NULL){
+		if(strstr("ACTION",lines[position])!=NULL){
 			int x =0;
 			for (x=0; x<strlen(lines[position]);x=x+1){
-				if(flag=1){
-					strcat(obj->action,lines[position][x]);
-				}else if (line[position]==';'||line[position]==':'){
+				if(flag==1){
+					obj->action[x]=lines[position][x];
+				}else if (lines[position][x]==';'||lines[position][x]==':'){
 					flag=1;
 				}
 			}
@@ -66,9 +65,9 @@ Alarm * createAlarm(char** lines,int position,int size){
 		}else if(strstr("TRIGGER",lines[position])!=NULL){
 			int x=0;
 			for(x=0; x<strlen(lines[position]);x=x+1){
-				if(flag=1){
-					strcat(obj->trigger,lines[position][x]);
-				}else if(line[position]==';'||line[position]==':'){
+				if(flag==1){
+					obj->trigger[x]=lines[position][x];
+				}else if(lines[position][x]==';'||lines[position][x]==':'){
 					flag=1;
 				}
 			}
@@ -81,17 +80,17 @@ Alarm * createAlarm(char** lines,int position,int size){
 }
 
 Property * createProperty(char* line){
-	Property* obj=malloc(sizeof(Property));
+	Property* obj=malloc(sizeof(Property)+ sizeof(char)* strlen(line));
 	int i=0;
 	int flag=0;
 	strcpy(obj->propName,"");
 	strcpy(obj->propDescr,"");
 	if(line!=NULL){
 		for(i=0; i< strlen(line); i=i+1){
-			if(flag=1){
-				strcat(obj->propDescr,line[i]);
+			if(flag==1){
+				obj->propDescr[i]=line[i];
 			}else if((line[i]!=':'|| line[i] !=';')&& flag !=1){
-				strcat(obj->propName,line[i]);
+				obj->propName[i]=line[i];
 			}else{
 				flag=1;
 			}
@@ -100,17 +99,18 @@ Property * createProperty(char* line){
 	return obj;
 }
 
-DateTime * createDate(char* line){
-	DateTime * obj=malloc(sizeof(DateTime));
+DateTime  createDate(char* line){
+	DateTime  obj;
 	int i=0;
+	int ctr=0;
 	int flag=0;
 	for (i=0; i<strlen(line); i=i+1){
-		if(flag=1){
-			strcat(obj->date,line[i]);
+		if(flag==1){
+			obj.date[i]=line[i];
 			ctr=ctr+1;
 			if(ctr==9){
 				if(line[i]=='T'){
-					obj->UTC=TRUE;
+					obj.UTC=true;
 				}
 				flag=2;
 			}
@@ -118,13 +118,13 @@ DateTime * createDate(char* line){
 			flag=1;
 		}
 		if(flag==2){
-			if(isdigit(atoi(line[i]))){
-				strcat(obj->time,line[i]);
+			if(isdigit(line[i])){
+				obj.time[i]=line[i];
 			}
 		}
 	}
-	if(line[strlen[i]-1]!='Z'){
-		obj->UTC=false;
+	if(line[strlen(line)-1]!='Z'){
+		obj.UTC=false;
 	}
 	return obj;
 }

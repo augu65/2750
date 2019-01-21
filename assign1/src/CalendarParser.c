@@ -27,32 +27,38 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	if(fp==NULL){
 		freeList((*obj)->events);
 		freeList((*obj)->properties);
-		free(fp);
 		free(fileName);
+		free(fp);
 		(*obj)=NULL;
 		return INV_FILE;
 	}
 	char buffer[1000]="";
-	int tflag=0;
 	char ** fileData=malloc(sizeof(char*));
 	int x=1;
-	while(fgets(buffer,sizeof(buffer),fp)){
-		fileData=realloc(fileData,sizeof(char*)+x);
-		(*fileData)=malloc(sizeof(char)*strlen(buffer));
-		if(buffer[0]=='\t'||buffer[0]==' '){
-			strcat(fileData[x-1],buffer);
-		}else{
-			strcpy(fileData[x],buffer);
-			x=x+1;
+	while(fgets(buffer,sizeof(buffer),fp)!=NULL){
+		fileData=realloc(fileData,sizeof(char*)*x);
+		fileData[x-1]=malloc(sizeof(char)*strlen(buffer));
+		if(buffer[0]!=';'){
+			if(buffer[0]=='\t'||buffer[0]==' '||(strstr(fileData[x-1],"\r\n")==NULL&&x!=1)){
+				strcat(fileData[x-1],buffer);
+			}else{
+				strcpy(fileData[x-1],buffer);
+				x=x+1;
+			}
 		}
+	}
+	for( int ix=0; ix<x;ix=ix+1){
+		printf("%s",fileData[ix]);
 	}
 	char string[10000]="";
 	int i=0;
 	int y=0;
 	x=x-1;
 	for(i=0; i<x; i=i+1){
+
 		if(strstr("VERSION",fileData[i])!=NULL&& strlen(fileData[i])>6){
 			y=0;
+			printf("here\n");
 			for(y=8; y<strlen(fileData[i]);y=y+1){
 				if(isalpha(fileData[i][y])||ispunct(fileData[i][y])){
 					if(fileData[i][y]!='.'){
@@ -71,6 +77,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 		}
 		else if(strstr("PRODID",fileData[i]) !=NULL&& strlen(fileData[i])>6){
 			y=0;
+			printf("foundPRODID\n");
 			for(y=7; y<strlen(fileData[i]);y=y+1){
 				strcat(string,&fileData[i][y]);
 			}
@@ -113,16 +120,22 @@ void deleteCalendar (Calendar*obj){
 
 char* printCalendar (const Calendar* obj){
 	if(obj !=NULL){
-		char * version=malloc(sizeof(char)*sizeof(float));
-		sprintf(version,"%f",obj->version);
+		char*e=toString(obj->events);
+		char*p=toString(obj->properties);
+		char * version=malloc(sizeof(char)*100);
+		snprintf(version,99,"%.2f",obj->version);
 		char * string=malloc(sizeof(char)*(1000+strlen(version)));
 		strcpy(string,"Version:");
 		strcat(string,version);
 		strcat(string,"\r\n");
 		strcat(string,"PRODID:");
 		strcat(string,obj->prodID);
-		strcat(string,printEvent(obj->events));
-		strcat(string,printProperty(obj->properties));
+		
+		strcat(string,e);
+		strcat(string,p);
+		free(e);
+		free(p);
+		free(version);
 		return string;
 	}
 	return "";
@@ -167,14 +180,21 @@ char* printEvent (void* toBePrinted){
 	char * str=malloc(sizeof(char)*size);
 	if(toBePrinted!=NULL){
 		strcpy(str,e->UID);
-		strcat(str,printDate(&e->creationDateTime));
-		strcat(str,printDate(&e->startDateTime));
-		strcat(str,toString(e->properties));
-		strcat(str,toString(e->alarms));
+		char * d=printDate(&e->creationDateTime);
+		char* ds=printDate(&e->startDateTime);
+		strcat(str,d);
+		strcat(str,ds);
+		char * p=toString(e->properties);
+		char* a=toString(e->alarms);
+		strcat(str,p);
+		strcat(str,a);
+		free(p);
+		free(a);
+		free(d);
+		free(ds);
 		return str;
 	}
 	free(str);
-	free(e);
 	return "";
 }
 
@@ -200,7 +220,9 @@ char* printAlarm (void* toBePrinted){
 		char* str=malloc(sizeof(char)*size);
 		strcpy(str,a->action);
 		strcat(str,a->trigger);
-		strcat(str,toString(a->properties));
+		char* s=toString(a->properties);
+		strcat(str,s);
+		free(s);
 		return str;	
 	}
 	return "";
@@ -222,7 +244,7 @@ char* printProperty (void* toBePrinted){
 	if(toBePrinted!=NULL){
 		Property * p=(Property*)toBePrinted;
 		int size=strlen(p->propDescr);
-		size=size+strlen(p->propName);
+		size=size+200;
 		char* str=malloc(sizeof(char)*size);
 		strcpy(str,p->propName);
 		strcat(str,p->propDescr);
@@ -233,7 +255,8 @@ char* printProperty (void* toBePrinted){
 
 void deleteDate (void* toBeDeleted){
 	if(toBeDeleted!=NULL){
-		free((DateTime*)toBeDeleted);
+		DateTime*d=(DateTime*)toBeDeleted;
+		free(d);
 	}
 }
 
@@ -246,14 +269,17 @@ int compareDates (const void* first, const void* second){
 char* printDate (void* toBePrinted){
 	if(toBePrinted!=NULL){
 		DateTime* d=(DateTime*)toBePrinted;
-		char* str=malloc(sizeof(char)*dateLength());
+		char* str=malloc(sizeof(char)*(dateLength()+30));
 		strcpy(str,d->date);
+		strcat(str," ");
 		strcat(str,d->time);
+		strcat(str," ");
 		if(d->UTC){
-			strcat(str,"true");
+			strcat(str,"UTC is true");
 		}else{
-			strcat(str,"false");
+			strcat(str,"UTC is false");
 		}
+		return str;
 	}
 	return "";
 }
