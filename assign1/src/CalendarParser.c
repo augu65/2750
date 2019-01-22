@@ -29,6 +29,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 		freeList((*obj)->properties);
 		free(fileName);
 		free(fp);
+		free((*obj));
 		(*obj)=NULL;
 		return INV_FILE;
 	}
@@ -75,6 +76,8 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 		free(fileData);
 		fclose(fp);
 		free(fileName);
+		free((*obj));
+		(*obj)=NULL;
 		return INV_FILE;
 	}
 	for(i=1; i<x; i=i+1){
@@ -86,7 +89,9 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 						freeList((*obj)->events);
 						freeList((*obj)->properties);
 						free(fileName);
+						free((*obj));
 						(*obj)=NULL;
+						fclose(fp);
 						return INV_FILE;
 					}
 				}

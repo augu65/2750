@@ -94,7 +94,7 @@ Property * createProperty(char* line){
 	strcpy(obj->propName,"");
 	strcpy(obj->propDescr,"");
 	if(line!=NULL){
-		for(i=0; i< strlen(line)-3; i=i+1){
+		for(i=0; i< strlen(line); i=i+1){
 			if(flag==1){
 				obj->propDescr[i]=line[i];
 			}else if((line[i]!=':'|| line[i] !=';')&& flag !=1){
@@ -108,7 +108,8 @@ Property * createProperty(char* line){
 }
 
 DateTime  createDate(char* line){
-	DateTime  obj;
+	DateTime obj;
+	printf("%s",line);
 	int i=0;
 	int ctr=0;
 	int flag=0;

@@ -46,9 +46,9 @@ int main(int argc, char**argv){
 	char* file=malloc(sizeof(char)*strlen(argv[1])+1);
 	strcpy(file,argv[1]);
 	createCalendar(file,&c);
-	char* str=	printCalendar(c);
+/*	char* str=	printCalendar(c);
 	printf("%s",str);
 	free(str);
 	deleteCalendar(c);
-	return 0;
+*/	return 0;
 }
