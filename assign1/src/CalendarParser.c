@@ -26,7 +26,6 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 		freeList((*obj)->events);
 		freeList((*obj)->properties);
 		free(fp);
-		free((*obj));
 		(*obj)=NULL;
 		return INV_FILE;
 	}
@@ -74,7 +73,6 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	int bflag=0;
 	int vflag=0;
 	int pflag=0;
-	return INV_FILE;
 	if(strstr(fileData[0],"BEGIN:VCALENDAR")!=NULL && strstr(fileData[x-1],"END:VCALENDAR")!=NULL){
 		x=x-1;
 	}else{
@@ -85,7 +83,6 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 		}
 		free(fileData);
 		fclose(fp);
-		free((*obj));
 		(*obj)=NULL;
 		return INV_CAL;
 	}
@@ -99,11 +96,10 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 				free((*obj)->events);
 				freeList((*obj)->properties);
 				fclose(fp);
-				for(int ix=0; ix<x; ix=ix+1){
+				for(int ix=0; ix<x+1; ix=ix+1){
 					free(fileData[ix]);
 				}
 				free(fileData);
-				free((*obj));
 				(*obj)=NULL;
 				return INV_VER;
 			}
@@ -118,7 +114,6 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 							free(fileData[ix]);
 						}
 						free(fileData);
-						free((*obj));
 						(*obj)=NULL;
 						free(string);
 						return INV_VER;
@@ -127,7 +122,8 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 				string[ctr]=fileData[i][y];
 				ctr=ctr+1;
 			}
-			(*obj)->version=atof(string);
+			string[ctr] = '\0';
+			(*obj)->version = atof(string);
 			free(string);
 		}
 		else if(strstr(fileData[i],"PRODID:") !=NULL&& strlen(fileData[i])>6){
@@ -138,11 +134,10 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 				freeList((*obj)->events);
 				freeList((*obj)->properties);
 				fclose(fp);
-				for(int ix=0;ix<x;ix=ix+1){
+				for(int ix=0;ix<x+1;ix=ix+1){
 					free(fileData[ix]);
 				}
 				free(fileData);
-				free((*obj));
 				(*obj)=NULL;
 				return INV_PRODID;
 			}
@@ -150,50 +145,48 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 				(*obj)->prodID[ctr]=fileData[i][y];
 				ctr=ctr+1;
 			}
+			(*obj)->prodID[ctr]='\0';
 		}
 		else{
 			if(strstr(fileData[i],"BEGIN:VEVENT")!=NULL){
 				bflag=bflag+1;
 				Event*e=createEvent(fileData,i,x);
 				insertFront((*obj)->events,e);
-				free(e);
 				int veflag=0;
-				for(y=i+1;y<x;y=y+1){
+				y=0;
+				for(y=i;y<x;y=y+1){
 					//doesnt work for no fucking reason
-					if(strstr(fileData[y],"VEVENT")!=NULL&&strstr(fileData[y],"END")!=NULL){
+					if(!(strstr(fileData[y],"END:VEVENT")==NULL)){
 						i=y;
 						veflag=1;
 					}
 				}
-				if(veflag!=0||e->UID==NULL||e->creationDateTime.date==NULL||e->startDateTime.date==NULL){
-					for(int ix=0; ix<x-1; ix=ix+1){
+				if(veflag==0||e->UID==NULL){
+					for(int ix=0; ix<x+1; ix=ix+1){
 						free(fileData[ix]);
 					}
 					freeList((*obj)->properties);
 					freeList((*obj)->events);
 					fclose(fp);
 					free(fileData);
-					free((*obj));
 					(*obj)=NULL;
 					return INV_EVENT;
 				}
 				y=0;
 			}else{
 				if(strstr(fileData[i],"BEGIN:VALARM")!=NULL){
-					for(int ix=9; ix<x-1; ix=ix+1){
+					for(int ix=9; ix<x+1; ix=ix+1){
 						free(fileData[ix]);
 					}
 					freeList((*obj)->properties);
 					freeList((*obj)->events);
 					fclose(fp);
 					free(fileData);
-					free((*obj));
 					(*obj)=NULL;
 					return INV_ALARM;
 				}
 				Property *p=createProperty(fileData[i]);
 				insertFront((*obj)->properties,p);
-				free(p);
 			}
 				
 		}
@@ -201,7 +194,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	}
 	if(vflag!=1){
 		if(vflag==0){
-			for(i=0; i<x-1; i=i+1){
+			for(i=0; i<x+1; i=i+1){
 				free(fileData[i]);
 			}
 			freeList((*obj)->properties);
@@ -209,47 +202,43 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 			fclose(fp);
 			free(fileData);
 			(*obj)=NULL;
-			free((*obj));
 			return INV_FILE;
 		}
-		for(i=0; i<x-1; i=i+1){
+		for(i=0; i<x+1; i=i+1){
 			free(fileData[i]);
 		}
 		freeList((*obj)->properties);
 		freeList((*obj)->events);
 		fclose(fp);
 		free(fileData);
-		free((*obj));
 		(*obj)=NULL;
 		return DUP_VER;
 		
 	}else if(bflag==0){
-		for(i=0; i<x-1;i=i+1){
+		for(i=0; i<x+1;i=i+1){
 			free(fileData[i]);
 		}
 		freeList((*obj)->properties);
 		freeList((*obj)->events);
 		fclose(fp);
 		free(fileData);
-		free((*obj));
 		(*obj)=NULL;
 		return INV_CAL;
 	}else if (pflag!=1){
-		for(i=0; i<x-1;i=i+1){
+		for(i=0; i<x+1;i=i+1){
 			free(fileData[i]);
 		}
 		freeList((*obj)->properties);
 		freeList((*obj)->events);
 		fclose(fp);
 		free(fileData);
-		free((*obj));
 		(*obj)=NULL;
 		if(pflag==0){	
 			return INV_CAL;
 		}
 		return DUP_PRODID;
 	}
-	for(i=0; i<x-1; i=i+1){
+	for(i=0; i<x+1; i=i+1){
 		free(fileData[i]);
 	}
 	fclose(fp);
@@ -276,10 +265,8 @@ char* printCalendar (const Calendar* obj){
 		char * string=malloc(sizeof(char)*size);
 		strcpy(string,"Version:");
 		strcat(string,version);
-		strcat(string,"\n");
 		strcat(string,"PRODID:");
 		strcat(string,obj->prodID);
-		strcat(string,"\n");
 		strcat(string,e);
 		strcat(string,p);
 		free(p);
@@ -332,8 +319,12 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 void deleteEvent (void* toBeDeleted){
 	if(toBeDeleted !=NULL){
 		Event* e=(Event*)toBeDeleted;
-		freeList(e->properties);
-		freeList(e->alarms);
+		if(e->properties!=NULL){
+			freeList(e->properties);
+		}
+		if(e->alarms!=NULL){
+			freeList(e->alarms);
+		}
 		free(e);
 	}	
 }
@@ -354,7 +345,6 @@ char* printEvent (void* toBePrinted){
 		int size=strlen(d)+strlen(ds)+strlen(p)+strlen(a)+strlen(e->UID)+200;
 		char*str=malloc(sizeof(char)*size);
 		strcpy(str,e->UID);
-		strcat(str,"\n");
 		strcat(str,d);
 		strcat(str,ds);
 		strcat(str,a);
@@ -372,8 +362,12 @@ char* printEvent (void* toBePrinted){
 void deleteAlarm (void* toBeDeleted){
 	if(toBeDeleted!=NULL){
 		Alarm * a=(Alarm*)toBeDeleted;
-		free(a->trigger);
-		freeList(a->properties);
+		if(a->trigger!=NULL){
+			free(a->trigger);
+		}
+		if(a->properties!=NULL){
+			freeList(a->properties);
+		}
 		free(a);
 	}
 }
@@ -392,9 +386,7 @@ char* printAlarm (void* toBePrinted){
 		size=size+strlen(s);
 		char* str=malloc(sizeof(char)*size);
 		strcpy(str,a->action);
-		strcat(str,"\n");
 		strcat(str,a->trigger);
-		strcat(str,"\n");
 		strcat(str,s);
 		free(s);
 		return str;	
@@ -417,11 +409,10 @@ int compareProperties (const void* first, const void* second){
 char* printProperty (void* toBePrinted){
 	if(toBePrinted!=NULL){
 		Property * p=(Property*)toBePrinted;
-		int size=strlen(p->propDescr)+strlen(p->propName)+100;
+		int size=sizeof(Property)+100;
 		char* str=malloc(sizeof(char)*size);
 		strcpy(str,p->propName);
 		strcat(str,p->propDescr);
-		strcat(str,"\n");
 		return str;
 	}
 	return "";
@@ -443,15 +434,15 @@ int compareDates (const void* first, const void* second){
 char* printDate (void* toBePrinted){
 	if(toBePrinted!=NULL){
 		DateTime* d=(DateTime*)toBePrinted;
-		char* str=malloc(sizeof(char)*100);
+		char* str=malloc(sizeof(char)*200);
 		strcpy(str,(*d).date);
 		strcat(str," ");
 		strcat(str,(*d).time);
 		strcat(str," ");
 		if((*d).UTC){
-			strcat(str,"UTC is true\n");
+			strcat(str,"UTC is true");
 		}else{
-			strcat(str,"UTC is false\n");
+			strcat(str,"UTC is false");
 		}
 		return str;
 	}
