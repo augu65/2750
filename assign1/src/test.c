@@ -42,13 +42,13 @@ int main(int argc, char**argv){
 	insertFront(obj->properties,ps);
 	deleteCalendar(obj);
 
-	Calendar * c=malloc(sizeof(Calendar));
-	char* file=malloc(sizeof(char)*strlen(argv[1])+1);
+	Calendar * c=malloc(sizeof(Calendar)*1);
+	char* file=malloc(sizeof(char)*(strlen(argv[1])+10));
 	strcpy(file,argv[1]);
 	createCalendar(file,&c);
-/*	char* str=	printCalendar(c);
+	char* str=	printCalendar(c);
 	printf("%s",str);
 	free(str);
-	deleteCalendar(c);
-*/	return 0;
+//	deleteCalendar(c);
+	return 0;
 }

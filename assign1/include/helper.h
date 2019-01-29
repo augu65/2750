@@ -7,8 +7,6 @@
 #define HELPER_H
 #include <ctype.h>
 #include "CalendarParser.h"
-//Gets the size of a DateTIme struct
-int dateLength();
 
 //creates a event struct and inserts data into it
 Event * createEvent(char** lines,int position, int size);
@@ -20,6 +18,6 @@ Alarm * createAlarm(char** lines,int position,int size);
 Property * createProperty(char* line);
 
 //creates a dattiem struct and inserts data into it
-DateTime  createDate(char* line);
+DateTime * createDate(char* line);
 
 #endif
