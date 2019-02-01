@@ -36,7 +36,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	int nflag=0;
 	int rflag=0;
 	while(fgets(buffer,sizeof(buffer),fp)!=NULL){
-		
+		if(buffer[0]!=';'){	
 		if((buffer[0]==' '||buffer[0]=='\t'||nflag==1||rflag==1)&&x!=0){
 			nflag=0;
 			rflag=0;
@@ -67,6 +67,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 			}
 			strcpy(fileData[x],buffer);
 			x=x+1;
+		}
 		}
 	}
 	int i=0;
@@ -151,6 +152,25 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 			if(strstr(fileData[i],"BEGIN:VEVENT")!=NULL){
 				bflag=bflag+1;
 				Event*e=createEvent(fileData,i,x);
+				if(strcmp(e->UID,"ErrorE")==0||strcmp(e->UID,"ErrorD")==0||strcmp(e->UID,"ErrorA")==0||strcmp(e->UID,"ErrorP")==0){
+					for(int ix=0; ix<x+1;ix =ix+1){
+						free(fileData[ix]);
+					}
+					freeList((*obj)->properties);
+					freeList((*obj)->events);
+					fclose(fp);
+					free(fileData);
+					(*obj)=NULL;
+				if(strcmp(e->UID,"ErrorE")==0){
+					return INV_EVENT;
+				}else if (strcmp(e->UID,"ErrorD")==0){
+					return INV_DT;
+				}else if(strcmp(e->UID,"ErrorA")==0){
+					return INV_ALARM;
+				}else if(strcmp(e->UID,"ErrorP")==0){
+					return INV_CAL;
+				}
+				}
 				insertFront((*obj)->events,e);
 				int veflag=0;
 				y=0;
@@ -185,8 +205,10 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 					(*obj)=NULL;
 					return INV_ALARM;
 				}
+				if(strstr(fileData[i],"END:")==NULL){
 				Property *p=createProperty(fileData[i]);
 				insertFront((*obj)->properties,p);
+				}
 			}
 				
 		}
@@ -277,29 +299,31 @@ char* printCalendar (const Calendar* obj){
 }
 
 char* printError (ICalErrorCode err){
+	char* descr=malloc(sizeof(char)*100);
 	if(err==INV_FILE){
-		return "An error in the file occured";
+		strcpy(descr,"An error in the file occured");
 	}else if(err==INV_CAL){
-		return "An error with the calendar component occured";
+		strcpy(descr,"An error with the calendar component occured");
 	}else if(err==INV_VER){
-		return "An error with the version occured";
+		strcpy(descr,"An error with the version occured");
 	}else if(err==DUP_VER){
-		return "More than one version was found";
+		strcpy(descr,"More than one version was found");
 	}else if(err==INV_PRODID){
-		return "An error with the prodid occured";
+		strcpy(descr,"An error with the prodid occured");
 	}else if(err==DUP_PRODID){
-		return "More than one prodid was found";
+		strcpy(descr,"More than one prodid was found");
 	}else if(err==INV_EVENT){
-		return "An error in the Event component occured";
+		strcpy(descr,"An error in the Event component occured");
 	}else if(err==INV_DT){
-		return "An error in the DateTime component occured";
+		strcpy(descr,"An error in the DateTime component occured");
 	}else if(err==INV_ALARM){
-		return "An error in the Alarm component occured";
+		strcpy(descr,"An error in the Alarm component occured");
 	}else if(err==OTHER_ERROR){
-		return"An undefined error occured";
+		strcpy(descr,"An undefined error occured");
 	}else{
-		return "Could not identify error code";
+		strcpy(descr,"Could not identify error code");
 	}
+	return descr;
 }
 
 ICalErrorCode writeCalendar (char* fileName, const Calendar* obj){
