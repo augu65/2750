@@ -1,0 +1,11 @@
+BEGIN:VCALENDAR
+VERSION:2.000000
+PRODID:-//hacksw/handcal//NONSGML v1.0//EN
+BEGIN:VEVENT
+UID:uid1@example.com
+SUMMARY:Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+CLASS:PUBLIC
+DTEND:19970715T035959Z
+ORGANIZER:CN=Jimmy Johnson:MAILTO:john.doe@example.com
+END:VEVENT
+END:VCALENDAR

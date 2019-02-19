@@ -2,6 +2,7 @@
 #include "helper.h"
 
 int main(int argc, char**argv){
+	/*
 	DateTime d;
 	strcpy(d.date,"20190117");
 	strcpy(d.time,"104200");
@@ -41,15 +42,19 @@ int main(int argc, char**argv){
 	strcpy(ps->propDescr,"394rtjigfvbgtd");
 	insertFront(obj->properties,ps);
 	deleteCalendar(obj);
-
+	*/
 	Calendar * c=malloc(sizeof(Calendar)*1);
 	char* file=malloc(sizeof(char)*(strlen(argv[1])+10));
 	strcpy(file,argv[1]);
 	createCalendar(file,&c);
-	char* str=printCalendar(c);
-	printf("%s",str);
-	free(str);
+//	printf("%s",printCalendar(c));
+	char * test=malloc(sizeof(char)*100);
+	strcpy(test,"testing.ics");
+	writeCalendar(test,c);
 	free(file);
+	//free(test);
 	deleteCalendar(c);
+//	deleteCalendar(c);
+//	free(c);
 	return 0;
 }
