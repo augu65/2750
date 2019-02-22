@@ -329,24 +329,6 @@ char * writeEvent(Event * obj){
 		strcat(object,"UID:");
 		strcat(object,obj->UID);
 		strcat(object,"\r\n");
-		DateTime dt=obj->creationDateTime;
-		DateTime dts=obj->startDateTime;
-		strcat(object,"DTSTART:");
-		strcat(object,dts.date);
-		strcat(object,"T");
-		strcat(object,dts.time);
-		if(dts.UTC==true){
-			strcat(object,"Z");
-		}
-		strcat(object,"\r\n");
-		strcat(object,"DTSTAMP:");
-		strcat(object,dt.date);
-		strcat(object,"T");
-		strcat(object,dt.time);
-		if(dt.UTC==true){
-			strcat(object,"Z");
-		}
-		strcat(object,"\r\n");
 		Alarm*al=nextElement(&itrA);
 		while(al!=NULL){
 			char* str=writeAlarm(al);

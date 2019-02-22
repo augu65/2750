@@ -367,37 +367,17 @@ char* printError (ICalErrorCode err){
 ICalErrorCode writeCalendar (char* fileName, const Calendar* obj){
 	if(fileName!=NULL && obj!=NULL){
 		Calendar * ob=(Calendar*)obj;
+		FILE * fp= fopen(fileName,"w+");
 		char * object=writeCal(ob);
-		if(strcmp(object,"OTHER_ERROR")!=0&&strcmp(object,"INV_ALARM")!=0&&strcmp(object,"INV_EVENT")!=0&&strcmp(object,"INV_CAL")!=0&&strcmp(object,"INV_DT")!=0){
-			FILE *fp=fopen(fileName,"w+");
-			char * string=malloc(sizeof(char)*200+strlen(object));
-			strcpy(string,"BEGIN:VCALENDAR\r\n");
-			strcat(string,object);
-			strcat(string,"END:VCALENDAR\r\n");
-			fprintf(fp,string);
-			free(string);
-			fclose(fp);
-			free(object);
-			free(fileName);
-		}else{
-			free(fileName);
-			if(strcmp(object,"OTHER_ERROR")==0){
-				free(object);
-				return OTHER_ERROR;
-			}else if(strcmp(object,"INV_ALARM")==0){
-					free(object);
-					return INV_ALARM;
-			}else if(strcmp(object,"INV_EVENT")==0){
-				free(object);
-				return INV_EVENT;
-			}else if(strcmp(object,"INV_CAL")==0){
-				free(object);
-				return INV_CAL;
-			}else if(strcmp(object,"INV_DT")==0){
-				free(object);
-				return INV_DT;
-			}
-		}
+		char * string=malloc(sizeof(char)*200+strlen(object));
+		strcpy(string,"BEGIN:VCALENDAR\r\n");
+		strcat(string,object);
+		strcat(string,"END:VCALENDAR\r\n");
+		fprintf(fp,string);
+		fclose(fp);
+		free(string);
+		free(object);
+		free(fileName);
 		return OK;
 	}
 	return INV_FILE;
@@ -405,127 +385,9 @@ ICalErrorCode writeCalendar (char* fileName, const Calendar* obj){
 
 ICalErrorCode validateCalendar (const Calendar* obj){
 	if(obj!=NULL){
-		if(obj->prodID==NULL||strcmp(obj->prodID,"")==0||strlen(obj->prodID)>1000){
-			return INV_PRODID;
-		}
-		if(obj->version<0){
-			return INV_VER;
-		}
-		if(obj->properties==NULL){
-			return INV_CAL;
-		}
-		ListIterator itrP=createIterator(obj->properties);
-		Property*prop=nextElement(&itrP);
-		while(prop!=NULL){
-			if(prop->propName==NULL||prop->propDescr==NULL||strlen(prop->propName)>200){
-				return INV_CAL;		
-			}
-			if(strcmp(prop->propName,"METHOD")!=0&&strcmp(prop->propName,"CALSCALE")!=0){
-				return INV_CAL;
-			}
-			prop=nextElement(&itrP);
-		}
-		if(obj->events!=NULL){
-			ListIterator itrE=createIterator(obj->events);
-			Event*ev=nextElement(&itrE);
-			while(ev!=NULL){
-				if(ev->UID==NULL||strcmp(ev->UID,"")==0||strlen(ev->UID)>1000){
-					return INV_EVENT;
-				}
-				
-				DateTime start=ev->startDateTime;
-				DateTime create=ev->creationDateTime;
-				if(strlen(start.date)!=9||strlen(start.time)!=7){
-					return INV_DT;
-				}
-				if(strlen(create.date)!=9||strlen(create.time)!=7){
-					return INV_DT;
-				}
-				int i=0;
-				for(i=0; i<9;i++){
-					if(!isdigit(create.date[i])){
-						return INV_DT;
-					}else if(!isdigit(start.date[i])){
-						return INV_DT;
-					}
-				}
-				for(i=0; i<7; i++){
-					if(!isdigit(create.time[i])){
-						return INV_DT;
-					}else if(!isdigit(start.time[i])){
-						return INV_DT;
-					}
-				}
-				if(ev->alarms!=NULL){
-					ListIterator itrA=createIterator(ev->alarms);
-					Alarm* al=nextElement(&itrA);
-					while(al!=NULL){
-						if(al->properties==NULL){
-							return INV_ALARM;
-						}
-						ListIterator itrAP=createIterator(al->properties);
-						Property* apr=nextElement(&itrAP);
-						if(al->trigger==NULL||strcmp(al->trigger,"")==0){
-							return INV_ALARM;
-						}
-						if(al->action==NULL||strcmp(al->action,"")==0||strlen(al->action)>200){
-							return INV_ALARM;
-						}
-						while(apr!=NULL){
-							if(apr->propName==NULL||apr->propDescr==NULL){	
-								return INV_ALARM;
-							}
-							char arr[5][100]={"ATTACH","DESCRIPTION","SUMMARY","DURATION","REPEAT"};
-							int flag=0;
-							for (int ctr=0; ctr<5;ctr++){
-								if(strcmp(arr[ctr],apr->propName)==0){
-									flag=1;
-									break;
-								}
-							}
-							if(flag!=1){
-								return INV_ALARM;
-							}
-							apr=nextElement(&itrAP);
-						}
-						al=nextElement(&itrA);
-					}
-				}else{
-					return INV_EVENT;
-				}
-				if(ev->properties!=NULL){
-					ListIterator itrEA=createIterator(ev->properties);
-					Property *pr=nextElement(&itrEA);
-					char arr[28][100]={"CREATED","LAST-MODIFIED","SEQUENCE","REQUEST-STATUS","TRANSP","ATTENDEE","CONTACT","ORGANIZER","RECURRENCE-ID","RELATED-TO","URL","EXDATE","RDATE","RRULE","DTEND","DURATION","ATTACH","CATEGORIES","CLASS","COMMENT","DESCRIPTION","GEO","LOCATION","PERCENT-COMPLETE","PRIORITY","RESOURCES","STATUS","SUMMARY"};
-					while(pr!=NULL){
-						if(pr->propName==NULL ||pr->propDescr==NULL||strlen(pr->propName)>200){
-							return INV_EVENT;
-						}
-						int flag=0;
-						for(int x=0; x<28; x++){
-							if(strcmp(arr[x],pr->propName)==0){
-								flag=1;
-								break;
-							}
-						}
-						if (flag!=1){
-							return INV_EVENT;
-						}
-						
-						pr=nextElement(&itrEA);
-					}
-				}else{
-					return INV_EVENT;
-				}
-
-				ev=nextElement(&itrE);
-			}
-		}else{
-			return INV_CAL;
-		}
 		return OK;
 	}
-	return INV_CAL;
+	return OK;
 }
 
 void deleteEvent (void* toBeDeleted){
