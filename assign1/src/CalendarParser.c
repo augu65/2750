@@ -437,24 +437,26 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 				
 				DateTime start=ev->startDateTime;
 				DateTime create=ev->creationDateTime;
-				if(strlen(start.date)!=9||strlen(start.time)!=7){
+				if(strlen(start.date)!=8||strlen(start.time)!=6){
 					return INV_DT;
 				}
-				if(strlen(create.date)!=9||strlen(create.time)!=7){
+				if(strlen(create.date)!=8||strlen(create.time)!=6){
 					return INV_DT;
 				}
 				int i=0;
-				for(i=0; i<9;i++){
-					if(!isdigit(create.date[i])){
+				for(i=0; i<8;i++){
+					if(!(isalpha(create.date[i])==0 &&ispunct(create.date[i])==0)){
 						return INV_DT;
-					}else if(!isdigit(start.date[i])){
+					}else if(!(isalpha(start.date[i])==0&&ispunct(start.date[i])==0)){
 						return INV_DT;
 					}
 				}
-				for(i=0; i<7; i++){
-					if(!isdigit(create.time[i])){
+				for(i=0; i<6; i++){
+					if(!(isalpha(create.time[i])==0&&ispunct(create.time[i])==0)){
+						printf("here5");
 						return INV_DT;
-					}else if(!isdigit(start.time[i])){
+					}else if(!(isalpha(start.time[i])==0&&ispunct(start.time[i])==0)){
+						printf("here6");
 						return INV_DT;
 					}
 				}
