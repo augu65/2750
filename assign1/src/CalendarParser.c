@@ -638,24 +638,58 @@ Calendar * JSONtoCalendar(const char* str){
 		Calendar* obj=malloc(sizeof(Calendar)*1);
 		obj->properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
 		obj->events=initializeList(&printEvent,&deleteEvent,&compareEvents);
-			
+		strcpy(obj->prodID,"");
+		int i=0;
+		int ctr=0;
+		int flag=0;
+		char string[1000];
+		for(i=12;i<strlen((char*)str)-2;i++){
+			if(flag==0){
+				if(isalpha(str[i])==0||str[i]=='.'){
+					string[ctr]=str[i];
+					ctr++;
+				}else{
+					string[ctr]='\0';
+					flag=1;
+					ctr=0;
+					i=i+11;
+					obj->version=atof(string);
+					strcpy(string,"");
+				}
+			}else{
+				string[ctr]=str[i];
+				ctr++;
+			}
+		}
+		string[ctr]='\0';
+		strcpy(obj->prodID,string);
 		return obj;
 	}
 	return NULL;
 }
 
 Event * JSONtoEvent(const char* str){
-	if(str!=NULL){
-		Event* obj=malloc(sizeof(Event));
+	if(str!=NULL&&strstr("{\"UID\":",str)!=NULL&&str[strlen((char*)str)-1]=='}'&&strlen((char*)str)<=1000){
+		Event* obj=malloc(sizeof(Event)*1);
 		obj->alarms=initializeList(&printAlarm,&deleteAlarm,&compareAlarms);
 		obj->properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
-
+		int i=0;
+		strcpy(obj->UID,"");
+		for(i=8; i<strlen((char*)str)-1; i++){
+			obj->UID[i-8]=str[i];		
+		}
+		strcat(obj->UID,"\0");
 		return obj;
 	}
 	return NULL;
 }
 
 void addEvent(Calendar*cal, Event*toBeAdded){
+	if( cal!=NULL && toBeAdded!=NULL){
+		if(cal->events!=NULL){
+			insertBack(cal->events,toBeAdded);
+		}
+	}
 }
 
 void deleteEvent (void* toBeDeleted){
