@@ -358,6 +358,8 @@ char* printError (ICalErrorCode err){
 		strcpy(descr,"An error in the Alarm component occured");
 	}else if(err==OTHER_ERROR){
 		strcpy(descr,"An undefined error occured");
+	}else if(err==OK){
+		strcpy(descr,"Successful");
 	}else{
 		strcpy(descr,"Could not identify error code");
 	}
@@ -526,6 +528,132 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 		return OK;
 	}
 	return INV_CAL;
+}
+
+char* dtToJSON (DateTime prop){
+	char * str=malloc(sizeof(char)*100);
+	strcpy(str,"{\"date\":\"");
+	strcat(str,prop.date);
+	strcat(str,"\",\"time\":\"");
+	strcat(str,prop.time);
+	strcat(str,"\",\"isUTC\":");
+	if(prop.UTC==true){
+		strcat(str,"true}");
+	}else{
+		strcat(str,"false}");
+	}
+	return str;
+}
+
+char * eventToJSON( const Event* event){
+	char * str=malloc(sizeof(char)*300);
+	if(event!=NULL){
+		strcpy(str,"{\"startDT\":");
+		char* string=dtToJSON(event->startDateTime);
+		strcat(str,string);
+		strcat(str,",\"numProps\":");
+		int propNum=getLength(event->properties);
+		char pr[5];
+		propNum=propNum+3;
+		sprintf(pr,"%d",propNum);
+		strcat(str,pr);
+		strcat(str,",\"numAlarms\":");
+		int almNum=getLength(event->alarms);
+		char al[5];
+		sprintf(al,"%d",almNum);
+		strcat(str,al);
+		strcat(str,",\"summary\":\"");
+		ListIterator itr=createIterator(event->properties);
+		Property* prop=nextElement(&itr);
+		while(prop!=NULL){
+			if(strcmp(prop->propName,"SUMMARY")==0){
+				strcat(str,prop->propDescr);
+				break;
+			}
+			prop=nextElement(&itr);
+		}
+		strcat(str,"\"}");
+	}else{
+		strcpy(str,"{}");
+	}
+	return str;
+}
+
+char * eventListToJSON( const List* eventList){
+	char *str= malloc(sizeof(char)*3);
+	if(eventList!=NULL){
+		ListIterator itr=createIterator((List*)eventList);
+		Event *ev=nextElement(&itr);
+		int i=0;
+		while(ev!=NULL){
+			i=i+1;
+			str=realloc(str,sizeof(char)*(310*i));	
+			strcpy(str,"[");
+			char* string=eventToJSON(ev);
+			strcat(str,string);
+			ev=nextElement(&itr);
+			if(ev!=NULL){
+				strcat(str,",");
+			}
+		}
+		strcat(str,"]");
+	}else{
+		strcpy(str,"[]");
+	}
+	return str;
+}
+
+char * calendarToJSON( const Calendar*cal){
+	char *str=malloc(sizeof(char)*3);
+	if(cal!=NULL){
+		str=realloc(str,sizeof(char)*1200);
+		strcpy(str,"{\"version\":");
+		char ver[10];
+		snprintf(ver,10,"%f",cal->version);
+		strcat(str,ver);
+		strcat(str,",\"prodID\":\"");
+		strcat(str,cal->prodID);
+		strcat(str,"\",\"numProps\":");
+		char numProp[5];
+		int num=getLength(cal->properties);
+		num=num+2;
+		sprintf(numProp,"%d",num);
+		strcat(str,numProp);
+		strcat(str,",\"numEvents\":");
+		num=getLength(cal->events);
+		char numEvent[5];
+		sprintf(numEvent,"%d",num);
+		strcat(str,numEvent);
+		strcat(str,"}");
+	}else{
+		strcpy(str,"{}");
+	}
+	return str;
+}
+
+Calendar * JSONtoCalendar(const char* str){
+	if(str!=NULL){
+		Calendar* obj=malloc(sizeof(Calendar)*1);
+		obj->properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
+		obj->events=initializeList(&printEvent,&deleteEvent,&compareEvents);
+			
+		return obj;
+	}
+	return NULL;
+}
+
+Event * JSONtoEvent(const char* str){
+	if(str!=NULL){
+		Event* obj=malloc(sizeof(Event));
+		obj->alarms=initializeList(&printAlarm,&deleteAlarm,&compareAlarms);
+		obj->properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
+
+		return obj;
+	}
+	return NULL;
+}
+
+void addEvent(Calendar*cal, Event*toBeAdded){
 }
 
 void deleteEvent (void* toBeDeleted){
