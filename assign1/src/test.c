@@ -55,6 +55,12 @@ int main(int argc, char**argv){
 	writeCalendar(test,c);
 	free(file);
 	//free(test);
+	Property*pr=malloc(sizeof(Property)*sizeof(char)+100);
+	strcpy(pr->propName,"GEO");
+	strcpy(pr->propDescr,"this is a test");
+	ListIterator  it=createIterator(c->events);
+	Event * ev=nextElement(&it);
+	insertBack(ev->properties,pr);
 	ee=validateCalendar(c);
 	char*str=printError(ee);
 	printf("%s\n",str);

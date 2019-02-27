@@ -360,7 +360,10 @@ char* printError (ICalErrorCode err){
 		strcpy(descr,"An undefined error occured");
 	}else if(err==OK){
 		strcpy(descr,"Successful");
-	}else{
+	}else if(err==WRITE_ERROR){
+		strcpy(descr,"Error when writing to file");
+	}
+	else{
 		strcpy(descr,"Could not identify error code");
 	}
 	return descr;
@@ -385,19 +388,19 @@ ICalErrorCode writeCalendar (char* fileName, const Calendar* obj){
 			free(fileName);
 			if(strcmp(object,"OTHER_ERROR")==0){
 				free(object);
-				return OTHER_ERROR;
+				return WRITE_ERROR;
 			}else if(strcmp(object,"INV_ALARM")==0){
-					free(object);
-					return INV_ALARM;
+				free(object);
+				return WRITE_ERROR;
 			}else if(strcmp(object,"INV_EVENT")==0){
 				free(object);
-				return INV_EVENT;
+				return WRITE_ERROR;
 			}else if(strcmp(object,"INV_CAL")==0){
 				free(object);
-				return INV_CAL;
+				return WRITE_ERROR;
 			}else if(strcmp(object,"INV_DT")==0){
 				free(object);
-				return INV_DT;
+				return WRITE_ERROR;
 			}
 		}
 		return OK;
@@ -416,11 +419,21 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 		if(obj->properties==NULL){
 			return INV_CAL;
 		}
+		int mcheck=0;
+		int ccheck=0;
 		ListIterator itrP=createIterator(obj->properties);
 		Property*prop=nextElement(&itrP);
 		while(prop!=NULL){
 			if(prop->propName==NULL||prop->propDescr==NULL||strlen(prop->propName)>200){
 				return INV_CAL;		
+			}
+			if(strcmp(prop->propName,"METHOD")==0){
+				mcheck++;
+			}else if(strcmp(prop->propName,"CALSCALE")==0){
+				ccheck++;
+			}
+			if(mcheck>1 ||ccheck>1){
+				return INV_CAL;
 			}
 			if(strcmp(prop->propName,"METHOD")!=0&&strcmp(prop->propName,"CALSCALE")!=0){
 				return INV_CAL;
@@ -453,10 +466,8 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 				}
 				for(i=0; i<6; i++){
 					if(!(isalpha(create.time[i])==0&&ispunct(create.time[i])==0)){
-						printf("here5");
 						return INV_DT;
 					}else if(!(isalpha(start.time[i])==0&&ispunct(start.time[i])==0)){
-						printf("here6");
 						return INV_DT;
 					}
 				}
@@ -500,24 +511,52 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 				if(ev->properties!=NULL){
 					ListIterator itrEA=createIterator(ev->properties);
 					Property *pr=nextElement(&itrEA);
-					char arr[28][100]={"CREATED","LAST-MODIFIED","SEQUENCE","REQUEST-STATUS","TRANSP","ATTENDEE","CONTACT","ORGANIZER","RECURRENCE-ID","RELATED-TO","URL","EXDATE","RDATE","RRULE","DTEND","DURATION","ATTACH","CATEGORIES","CLASS","COMMENT","DESCRIPTION","GEO","LOCATION","PERCENT-COMPLETE","PRIORITY","RESOURCES","STATUS","SUMMARY"};
+					int created=0;
+					int rrule=0;
+					int transp=0;
+					int url=0;
+					int class=0;
+					int resources=0;
+					int status=0;
+					char arr[27][100]={"CREATED","LAST-MODIFIED","SEQUENCE","REQUEST-STATUS","TRANSP","ATTENDEE","CONTACT","ORGANIZER","RECURRENCE-ID","RELATED-TO","URL","EXDATE","RDATE","RRULE","DTEND","DURATION","ATTACH","CATEGORIES","CLASS","COMMENT","DESCRIPTION","GEO","LOCATION","PRIORITY","RESOURCES","STATUS","SUMMARY"};
 					while(pr!=NULL){
 						if(pr->propName==NULL ||pr->propDescr==NULL||strlen(pr->propName)>200){
 							return INV_EVENT;
 						}
 						int flag=0;
-						for(int x=0; x<28; x++){
+						
+						for(int x=0; x<27; x++){
 							if(strcmp(arr[x],pr->propName)==0){
 								flag=1;
 								break;
 							}
 						}
-						if (flag!=1){
+						if(flag!=1){
+							printf("here");
 							return INV_EVENT;
 						}
-						
+			
+						if(strcmp(pr->propName,"CREATED")==0){
+							created++;
+						}else if(strcmp(pr->propName,"RRULE")==0){
+							rrule++;
+						}else if(strcmp(pr->propName,"TRANSP")==0){
+							transp++;
+						}else if(strcmp(pr->propName,"URL")==0){
+							url++;
+						}else if(strcmp(pr->propName,"CLASS")==0){
+							class++;
+						}else if(strcmp(pr->propName,"RESOURCES")==0){
+							resources++;
+						}else if(strcmp(pr->propName,"STATUS")==0){
+							status++;
+						}
 						pr=nextElement(&itrEA);
 					}
+					if(created>1||rrule>1||transp>1||url>1||class>1||resources>1||status>1){
+						return INV_EVENT;
+					}	
+					
 				}else{
 					return INV_EVENT;
 				}
@@ -611,7 +650,8 @@ char * calendarToJSON( const Calendar*cal){
 		str=realloc(str,sizeof(char)*1200);
 		strcpy(str,"{\"version\":");
 		char ver[10];
-		snprintf(ver,10,"%f",cal->version);
+		int version=cal->version;
+		snprintf(ver,10,"%d",version);
 		strcat(str,ver);
 		strcat(str,",\"prodID\":\"");
 		strcat(str,cal->prodID);
@@ -732,7 +772,7 @@ char* printEvent (void* toBePrinted){
 		free(a);
 		return str;
 	}
-	free(e);
+	
 	return "";
 }
 
