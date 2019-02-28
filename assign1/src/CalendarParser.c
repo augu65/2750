@@ -17,7 +17,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	if (length<5 || !(fileName[length-4]=='.' && fileName[length-3]=='i' && fileName[length-2]=='c' &&fileName[length-1]=='s')){
 		free((*obj));
 		(*obj)=NULL;
-		
+
 		return INV_FILE;
 	}
 	FILE* fp;
@@ -39,7 +39,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 	int nflag=0;
 	int rflag=0;
 	while(fgets(buffer,sizeof(buffer),fp)!=NULL){
-		if(buffer[0]!=';'){	
+		if(buffer[0]!=';'){
 		if((buffer[0]==' '||buffer[0]=='\t'||nflag==1||rflag==1)&&x!=0){
 			nflag=0;
 			rflag=0;
@@ -244,7 +244,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 				}
 				}
 			}
-				
+
 		}
 		}
 	}
@@ -271,7 +271,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 		free((*obj));
 		(*obj)=NULL;
 		return DUP_VER;
-		
+
 	}else if(bflag==0){
 		for(i=0; i<x+1;i=i+1){
 			free(fileData[i]);
@@ -293,7 +293,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 		free(fileData);
 		free((*obj));
 		(*obj)=NULL;
-		if(pflag==0){	
+		if(pflag==0){
 			return INV_CAL;
 		}
 		return DUP_PRODID;
@@ -425,7 +425,7 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 		Property*prop=nextElement(&itrP);
 		while(prop!=NULL){
 			if(prop->propName==NULL||prop->propDescr==NULL||strlen(prop->propName)>200){
-				return INV_CAL;		
+				return INV_CAL;
 			}
 			if(strcmp(prop->propName,"METHOD")==0){
 				mcheck++;
@@ -447,7 +447,7 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 				if(ev->UID==NULL||strcmp(ev->UID,"")==0||strlen(ev->UID)>1000){
 					return INV_EVENT;
 				}
-				
+
 				DateTime start=ev->startDateTime;
 				DateTime create=ev->creationDateTime;
 				if(strlen(start.date)!=8||strlen(start.time)!=6){
@@ -486,15 +486,17 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 						if(al->action==NULL||strcmp(al->action,"")==0||strlen(al->action)>200){
 							return INV_ALARM;
 						}
+						int nums[5]={0};
+						char arr[3][50]={"ATTACH","DURATION","REPEAT"};
 						while(apr!=NULL){
-							if(apr->propName==NULL||apr->propDescr==NULL){	
+							if(apr->propName==NULL||apr->propDescr==NULL){
 								return INV_ALARM;
 							}
-							char arr[5][100]={"ATTACH","DESCRIPTION","SUMMARY","DURATION","REPEAT"};
 							int flag=0;
-							for (int ctr=0; ctr<5;ctr++){
+							for (int ctr=0; ctr<3;ctr++){
 								if(strcmp(arr[ctr],apr->propName)==0){
 									flag=1;
+									nums[ctr]=nums[ctr]+1;
 									break;
 								}
 							}
@@ -502,6 +504,11 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 								return INV_ALARM;
 							}
 							apr=nextElement(&itrAP);
+						}
+						for(int ctr=0; ctr<7; ctr++){
+							if(nums[ctr]>1&&(strcmp(arr[ctr],"ATTACH")==0||strcmp(arr[ctr],"DURATION")==0||strcmp(arr[ctr],"REPEAT")==0)){
+								return INV_ALARM;
+							}
 						}
 						al=nextElement(&itrA);
 					}
@@ -516,16 +523,24 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 					int transp=0;
 					int url=0;
 					int class=0;
-					int resources=0;
 					int status=0;
-					char arr[27][100]={"CREATED","LAST-MODIFIED","SEQUENCE","REQUEST-STATUS","TRANSP","ATTENDEE","CONTACT","ORGANIZER","RECURRENCE-ID","RELATED-TO","URL","EXDATE","RDATE","RRULE","DTEND","DURATION","ATTACH","CATEGORIES","CLASS","COMMENT","DESCRIPTION","GEO","LOCATION","PRIORITY","RESOURCES","STATUS","SUMMARY"};
+					int summary=0;
+					int priority=0;
+					int recurid=0;
+					int seq=0;
+					int geo=0;
+					int description=0;
+					int lastM=0;
+					int location=0;
+					int organizer=0;
+					char arr[26][100]={"CREATED","LAST-MOD","SEQ","TRANSP","ATTENDEE","CONTACT","ORGANIZER","RECURID","RELATED","URL","EXDATE","RDATE","RRULE","DTEND","DURATION","ATTACH","CATEGORIES","CLASS","COMMENT","DESCRIPTION","GEO","LOCATION","PRIORITY","RESOURCES","STATUS","SUMMARY"};
 					while(pr!=NULL){
 						if(pr->propName==NULL ||pr->propDescr==NULL||strlen(pr->propName)>200){
 							return INV_EVENT;
 						}
 						int flag=0;
-						
-						for(int x=0; x<27; x++){
+
+						for(int x=0; x<26; x++){
 							if(strcmp(arr[x],pr->propName)==0){
 								flag=1;
 								break;
@@ -535,7 +550,7 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 							printf("here");
 							return INV_EVENT;
 						}
-			
+
 						if(strcmp(pr->propName,"CREATED")==0){
 							created++;
 						}else if(strcmp(pr->propName,"RRULE")==0){
@@ -546,17 +561,33 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 							url++;
 						}else if(strcmp(pr->propName,"CLASS")==0){
 							class++;
-						}else if(strcmp(pr->propName,"RESOURCES")==0){
-							resources++;
 						}else if(strcmp(pr->propName,"STATUS")==0){
 							status++;
+						}else if(strcmp(pr->propName,"SUMMARY")==0){
+							summary++;
+						}else if(strcmp(pr->propName,"PRIORITY")==0){
+							priority++;
+						}else if(strcmp(pr->propName,"RECURID")==0){
+							recurid++;
+						}else if(strcmp(pr->propName,"SEQ")==0){
+							seq++;
+						}else if(strcmp(pr->propName,"ORGANIZER")==0){
+							organizer++;
+						}else if(strcmp(pr->propName,"LOCATION")==0){
+							location++;
+						}else if(strcmp(pr->propName,"LAST-MOD")==0){
+							lastM++;
+						}else if(strcmp(pr->propName,"GEO")==0){
+							geo++;
+						}else if(strcmp(pr->propName,"DESCRIPTION")==0){
+							description++;
 						}
 						pr=nextElement(&itrEA);
 					}
-					if(created>1||rrule>1||transp>1||url>1||class>1||resources>1||status>1){
+					if(created>1||rrule>1||transp>1||url>1||class>1||status>1||summary>1||priority>1||recurid>1||seq>1||organizer>1||location>1||lastM>1||geo>1||description>1){
 						return INV_EVENT;
-					}	
-					
+					}
+
 				}else{
 					return INV_EVENT;
 				}
@@ -628,7 +659,7 @@ char * eventListToJSON( const List* eventList){
 		int i=0;
 		while(ev!=NULL){
 			i=i+1;
-			str=realloc(str,sizeof(char)*(310*i));	
+			str=realloc(str,sizeof(char)*(310*i));
 			strcpy(str,"[");
 			char* string=eventToJSON(ev);
 			strcat(str,string);
@@ -716,7 +747,7 @@ Event * JSONtoEvent(const char* str){
 		int i=0;
 		strcpy(obj->UID,"");
 		for(i=8; i<strlen((char*)str)-1; i++){
-			obj->UID[i-8]=str[i];		
+			obj->UID[i-8]=str[i];
 		}
 		strcat(obj->UID,"\0");
 		return obj;
@@ -742,7 +773,7 @@ void deleteEvent (void* toBeDeleted){
 			freeList(e->alarms);
 		}
 		free(e);
-	}	
+	}
 }
 
 int compareEvents (const void* first, const void* second){
@@ -772,7 +803,7 @@ char* printEvent (void* toBePrinted){
 		free(a);
 		return str;
 	}
-	
+
 	return "";
 }
 
@@ -806,7 +837,7 @@ char* printAlarm (void* toBePrinted){
 		strcat(str,a->trigger);
 		strcat(str,s);
 		free(s);
-		return str;	
+		return str;
 	}
 	return "";
 }
