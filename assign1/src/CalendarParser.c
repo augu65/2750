@@ -451,24 +451,24 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 				DateTime start=ev->startDateTime;
 				DateTime create=ev->creationDateTime;
 				if(strlen(start.date)!=8||strlen(start.time)!=6){
-					return INV_DT;
+					return INV_EVENT;
 				}
 				if(strlen(create.date)!=8||strlen(create.time)!=6){
-					return INV_DT;
+					return INV_EVENT;
 				}
 				int i=0;
 				for(i=0; i<8;i++){
 					if(!(isalpha(create.date[i])==0 &&ispunct(create.date[i])==0)){
-						return INV_DT;
+						return INV_EVENT;
 					}else if(!(isalpha(start.date[i])==0&&ispunct(start.date[i])==0)){
-						return INV_DT;
+						return INV_EVENT;
 					}
 				}
 				for(i=0; i<6; i++){
 					if(!(isalpha(create.time[i])==0&&ispunct(create.time[i])==0)){
-						return INV_DT;
+						return INV_EVENT;
 					}else if(!(isalpha(start.time[i])==0&&ispunct(start.time[i])==0)){
-						return INV_DT;
+						return INV_EVENT;
 					}
 				}
 				if(ev->alarms!=NULL){
@@ -505,7 +505,7 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 							}
 							apr=nextElement(&itrAP);
 						}
-						for(int ctr=0; ctr<7; ctr++){
+						for(int ctr=0; ctr<3; ctr++){
 							if(nums[ctr]>1&&(strcmp(arr[ctr],"ATTACH")==0||strcmp(arr[ctr],"DURATION")==0||strcmp(arr[ctr],"REPEAT")==0)){
 								return INV_ALARM;
 							}
