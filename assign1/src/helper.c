@@ -67,6 +67,7 @@ Event * createEvent(char** lines, int position, int size){
 				if(lines[position][i-1]=='Z'){
 					d.UTC=true;
 				}else{
+					d.time[ctr]='\0';
 					d.UTC=false;
 				}
 				obj->creationDateTime=d;
@@ -109,6 +110,7 @@ Event * createEvent(char** lines, int position, int size){
 				if(lines[position][i-1]=='Z'){
 					d.UTC=true;
 				}else{
+					d.time[ctr]='\0';
 					d.UTC=false;
 				}
 				obj->startDateTime=d;

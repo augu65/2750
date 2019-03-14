@@ -32,7 +32,7 @@ ICalErrorCode createCalendar (char* fileName, Calendar** obj){
 		(*obj)=NULL;
 		return INV_FILE;
 	}
-	char buffer[1000];
+	char buffer[10000];
 	char ** fileData=malloc(sizeof(char*));
 	int x=0;
 	int y=0;
@@ -383,9 +383,7 @@ ICalErrorCode writeCalendar (char* fileName, const Calendar* obj){
 			free(string);
 			fclose(fp);
 			free(object);
-			free(fileName);
 		}else{
-			free(fileName);
 			if(strcmp(object,"OTHER_ERROR")==0){
 				free(object);
 				return WRITE_ERROR;
@@ -405,7 +403,7 @@ ICalErrorCode writeCalendar (char* fileName, const Calendar* obj){
 		}
 		return OK;
 	}
-	return INV_FILE;
+	return WRITE_ERROR;
 }
 
 ICalErrorCode validateCalendar (const Calendar* obj){
@@ -424,7 +422,7 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 		ListIterator itrP=createIterator(obj->properties);
 		Property*prop=nextElement(&itrP);
 		while(prop!=NULL){
-			if(prop->propName==NULL||prop->propDescr==NULL||strlen(prop->propName)>200){
+			if(prop->propName==NULL||prop->propDescr==NULL||strlen(prop->propName)>200||strlen(prop->propDescr)==0){
 				return INV_CAL;
 			}
 			if(strcmp(prop->propName,"METHOD")==0){
@@ -448,26 +446,26 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 					return INV_EVENT;
 				}
 
-				DateTime start=ev->startDateTime;
-				DateTime create=ev->creationDateTime;
-				if(strlen(start.date)!=8||strlen(start.time)!=6){
+				DateTime *start=&ev->startDateTime;
+				DateTime *create=&ev->creationDateTime;
+				if(strlen(start->date)!=8||strlen(start->time)!=6){
 					return INV_EVENT;
 				}
-				if(strlen(create.date)!=8||strlen(create.time)!=6){
+				if(strlen(create->date)!=8||strlen(create->time)!=6){
 					return INV_EVENT;
 				}
 				int i=0;
 				for(i=0; i<8;i++){
-					if(!(isalpha(create.date[i])==0 &&ispunct(create.date[i])==0)){
+					if(!(isalpha(create->date[i])==0 &&ispunct(create->date[i])==0)){
 						return INV_EVENT;
-					}else if(!(isalpha(start.date[i])==0&&ispunct(start.date[i])==0)){
+					}else if(!(isalpha(start->date[i])==0&&ispunct(start->date[i])==0)){
 						return INV_EVENT;
 					}
 				}
 				for(i=0; i<6; i++){
-					if(!(isalpha(create.time[i])==0&&ispunct(create.time[i])==0)){
+					if(!(isalpha(create->time[i])==0&&ispunct(create->time[i])==0)){
 						return INV_EVENT;
-					}else if(!(isalpha(start.time[i])==0&&ispunct(start.time[i])==0)){
+					}else if(!(isalpha(start->time[i])==0&&ispunct(start->time[i])==0)){
 						return INV_EVENT;
 					}
 				}
@@ -547,7 +545,6 @@ ICalErrorCode validateCalendar (const Calendar* obj){
 							}
 						}
 						if(flag!=1){
-							printf("here");
 							return INV_EVENT;
 						}
 
@@ -623,6 +620,7 @@ char * eventToJSON( const Event* event){
 		strcpy(str,"{\"startDT\":");
 		char* string=dtToJSON(event->startDateTime);
 		strcat(str,string);
+		free(string);
 		strcat(str,",\"numProps\":");
 		int propNum=getLength(event->properties);
 		char pr[5];
@@ -656,12 +654,11 @@ char * eventListToJSON( const List* eventList){
 	if(eventList!=NULL){
 		ListIterator itr=createIterator((List*)eventList);
 		Event *ev=nextElement(&itr);
-		int i=0;
+		strcpy(str,"[");
 		while(ev!=NULL){
-			i=i+1;
-			str=realloc(str,sizeof(char)*(310*i));
-			strcpy(str,"[");
-			char* string=eventToJSON(ev);
+			char*string=eventToJSON(ev);
+			printf("%s\n",string);
+			str=realloc(str,sizeof(char)*(310+strlen(string)+1));
 			strcat(str,string);
 			ev=nextElement(&itr);
 			if(ev!=NULL){
@@ -706,6 +703,7 @@ char * calendarToJSON( const Calendar*cal){
 
 Calendar * JSONtoCalendar(const char* str){
 	if(str!=NULL){
+		printf("%s\n",str);
 		Calendar* obj=malloc(sizeof(Calendar)*1);
 		obj->properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
 		obj->events=initializeList(&printEvent,&deleteEvent,&compareEvents);
@@ -714,16 +712,17 @@ Calendar * JSONtoCalendar(const char* str){
 		int ctr=0;
 		int flag=0;
 		char string[1000];
-		for(i=12;i<strlen((char*)str)-2;i++){
+		for(i=11;i<strlen((char*)str)-2;i++){
 			if(flag==0){
-				if(isalpha(str[i])==0||str[i]=='.'){
+				
+				if((isalpha(str[i])==0&& ispunct(str[i])==0)||str[i]=='.'){
 					string[ctr]=str[i];
 					ctr++;
 				}else{
 					string[ctr]='\0';
 					flag=1;
 					ctr=0;
-					i=i+11;
+					i=i+10;
 					obj->version=atof(string);
 					strcpy(string,"");
 				}
@@ -740,16 +739,20 @@ Calendar * JSONtoCalendar(const char* str){
 }
 
 Event * JSONtoEvent(const char* str){
-	if(str!=NULL&&strstr("{\"UID\":",str)!=NULL&&str[strlen((char*)str)-1]=='}'&&strlen((char*)str)<=1000){
+	if(str!=NULL){
 		Event* obj=malloc(sizeof(Event)*1);
 		obj->alarms=initializeList(&printAlarm,&deleteAlarm,&compareAlarms);
 		obj->properties=initializeList(&printProperty,&deleteProperty,&compareProperties);
 		int i=0;
+		int ctr=0;
 		strcpy(obj->UID,"");
-		for(i=8; i<strlen((char*)str)-1; i++){
-			obj->UID[i-8]=str[i];
+		char string[1000];
+		for(i=8; i<strlen((char*)str)-2; i++){
+			string[ctr]=str[i];
+			ctr++;
 		}
-		strcat(obj->UID,"\0");
+		string[ctr]='\0';
+		strcpy(obj->UID,string);
 		return obj;
 	}
 	return NULL;
