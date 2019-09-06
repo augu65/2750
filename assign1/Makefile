@@ -7,15 +7,8 @@ LIBS = -Lbin
 
 all: list helper parser
 
-test:   list parser
-	$(CC) -c $(CFLAGS) src/test.c -o bin/test.o -I include
-	$(CC) $(CFLAGS) $(LIBS) -Wl,-R -Wl,bin/ -o bin/test bin/test.o -llist -lcal
-
-Calendar: helper src/CalendarParser.c include/CalendarParser.h include/helper.h
-	$(CC) -c $(CFLAGS)-fPIC src/CalendarParser.c -o bin/CalendarParser.o -I include
-
-Linked: src/LinkedListAPI.c include/LinkedListAPI.h
-	$(CC) -c $(CLFAGS) src/LinkedListAPI.c -o bin/LinkedListAPI.o -I include
+list: src/LinkedListAPI.c include/LinkedListAPI.h
+	$(CC) -shared $(CFLAGS)-o bin/liblist.so -fPIC src/LinkedListAPI.c
 	
 list: src/LinkedListAPI.c include/LinkedListAPI.h
 	$(CC) -shared $(CFLAGS)-o bin/liblist.so -fPIC src/LinkedListAPI.c -I include
